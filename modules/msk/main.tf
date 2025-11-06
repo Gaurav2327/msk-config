@@ -2,6 +2,19 @@ provider "aws" {
   region = var.region
 }
 
+####################################################
+########### Cluster Configurations #################
+####################################################
+resource "aws_msk_configuration" "cluster_configuration" {
+  name          = "${var.cluster_name}-configuration"
+  kafka_versions = [var.kafka_version]
+  description   = "MSK cluster configuration"
+  server_properties = <<EOF
+auto.create.topics.enable=true
+default.replication.factor=3
+EOF
+}
+
 resource "aws_msk_cluster" "msk_cluster" {
   cluster_name           = var.cluster_name
   kafka_version          = var.kafka_version
@@ -26,6 +39,11 @@ resource "aws_msk_cluster" "msk_cluster" {
         log_group = aws_cloudwatch_log_group.msk_log_group.name
       }
     }
+  }
+
+  configuration_info {
+    arn      = aws_msk_configuration.cluster_configuration.arn
+    revision = aws_msk_configuration.cluster_configuration.latest_revision
   }
 }
 
